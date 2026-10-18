@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Text-to-SQL</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f5fb;
+            color: #20243a;
+        }
+
+        header {
+            background: #222b5c;
+            color: white;
+            padding: 22px 7%;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 25px;
+        }
+
+        header p {
+            margin: 0;
+            color: #d8defb;
+            font-size: 14px;
+        }
+
+        main {
+            max-width: 850px;
+            margin: 35px auto;
+            padding: 0 18px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 26px;
+            box-shadow: 0 8px 30px rgba(25, 35, 80, 0.08);
+        }
+
+        .status {
+            display: inline-block;
+            background: #e5f8ed;
+            color: #187344;
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+
+        h2 {
+            margin: 0 0 10px;
+            font-size: 22px;
+        }
+
+        .description {
+            color: #68708a;
+            line-height: 1.6;
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 9px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 115px;
+            padding: 14px;
+            border: 1px solid #d6dbea;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #5968d9;
+            box-shadow: 0 0 0 3px #5968d920;
+        }
+
+        .examples {
+            margin: 14px 0 20px;
+        }
+
+        .examples p {
+            color: #68708a;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .example {
+            display: inline-block;
+            border: 1px solid #dce1ef;
+            background: #f8f9fe;
+            color: #38416c;
+            border-radius: 20px;
+            padding: 8px 12px;
+            margin: 0 6px 8px 0;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .example:hover {
+            background: #ecefff;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        #askButton {
+            background: #4d5bd4;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            padding: 13px 22px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #askButton:hover {
+            background: #3947b9;
+        }
+
+        #askButton:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        #usage {
+            color: #727990;
+            font-size: 12px;
+        }
+
+        #message {
+            margin-top: 16px;
+            color: #a23b36;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+        .answer-box {
+            margin-top: 25px;
+            padding: 20px;
+            border: 1px solid #e0e5f1;
+            border-radius: 12px;
+            background: #fbfcff;
+        }
+
+        .answer-box h3 {
+            margin: 0 0 12px;
+            font-size: 17px;
+        }
+
+        #answer {
+            line-height: 1.7;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #858ba0;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 20px;
+            }
+
+            main {
+                margin: 20px auto;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>🤖 Agentic Text-to-SQL</h1>
+        <p>Ask questions about your student database using natural language.</p>
+    </header>
+
+    <main>
+        <section class="panel">
+            <span class="status">● Backend connection through FastAPI</span>
+
+            <h2>Ask your database</h2>
+            <p class="description">
+                Type a question in plain English. Your AI agent will process
+                the question and retrieve relevant information from PostgreSQL.
+            </p>
+
+            <form id="questionForm">
+                <label for="question">Your question</label>
+
+                <textarea
+                    id="question"
+                    placeholder="Example: Show students with CGPA greater than 8"
+                    required
+                ></textarea>
+
+                <div class="examples">
+                    <p>Try an example (click to fill the input):</p>
+
+                    <button class="example" type="button"
+                        data-question="Show students with CGPA greater than 8">
+                        Students with CGPA above 8
+                    </button>
+
+                    <button class="example" type="button"
+                        data-question="Show all students from IT branch">
+                        Students in IT
+                    </button>
+
+                    <button class="example" type="button"
+                        data-question="Count students in each branch">
+                        Count by branch
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button id="askButton" type="submit">Ask AI →</button>
+                    <span id="usage">API requests used: 0 / 20</span>
+                </div>
+
+                <div id="message" role="status" aria-live="polite"></div>
+            </form>
+
+            <section id="answerBox" class="answer-box hidden">
+                <h3>💡 Agent's answer</h3>
+                <div id="answer"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer>
+        Built with HTML, CSS, JavaScript, FastAPI, PostgreSQL and Gemini.
+    </footer>
+
+    <script>
+        const form = document.getElementById("questionForm");
+        const questionInput = document.getElementById("question");
+        const askButton = document.getElementById("askButton");
+        const message = document.getElementById("message");
+        const answerBox = document.getElementById("answerBox");
+        const answer = document.getElementById("answer");
+        const usage = document.getElementById("usage");
+
+        // This is a frontend guard, not a change to Gemini's actual quota.
+        const MAX_REQUESTS = 20;
+        const COUNT_KEY = "textToSqlRequestCount";
+        const CACHE_KEY = "textToSqlAnswerCache";
+
+        function getRequestCount() {
+            return Number(sessionStorage.getItem(COUNT_KEY) || "0");
+        }
+
+        function updateUsage() {
+            usage.textContent =
+                `API requests used: ${getRequestCount()} / ${MAX_REQUESTS}`;
+        }
+
+        function getCache() {
+            try {
+                return JSON.parse(sessionStorage.getItem(CACHE_KEY) || "{}");
+            } catch {
+                return {};
+            }
+        }
+
+        function showAnswer(value) {
+            // Use textContent rather than innerHTML for safe output rendering.
+            if (typeof value === "string") {
+                answer.textContent = value;
+            } else {
+                answer.textContent = JSON.stringify(value, null, 2);
+            }
+
+            answerBox.classList.remove("hidden");
+        }
+
+        // Example buttons only fill the textbox; they do not call the API.
+        document.querySelectorAll(".example").forEach(button => {
+            button.addEventListener("click", () => {
+                questionInput.value = button.dataset.question;
+                questionInput.focus();
+            });
+        });
+
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                message.textContent = "Please enter a question.";
+                return;
+            }
+
+            const cache = getCache();
+            const cacheKey = question.toLowerCase();
+
+            // Reuse an answer for a repeated question in this browser tab.
+            if (Object.prototype.hasOwnProperty.call(cache, cacheKey)) {
+                message.textContent = "Showing a cached answer — no API call used.";
+                showAnswer(cache[cacheKey]);
+                return;
+            }
+
+            if (getRequestCount() >= MAX_REQUESTS) {
+                message.textContent =
+                    "This page has reached its 20-request limit. " +
+                    "Avoid refreshing or clearing browser session data to " +
+                    "manage your quota; check your provider's quota instead.";
+                return;
+            }
+
+            askButton.disabled = true;
+            message.style.color = "#68708a";
+            message.textContent = "Thinking... contacting your AI agent.";
+            answerBox.classList.add("hidden");
+
+            // Count the attempted request before sending it.
+            sessionStorage.setItem(COUNT_KEY, String(getRequestCount() + 1));
+            updateUsage();
+
+            try {
+                const response = await fetch("/ask", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.detail || `Request failed (${response.status}).`
+                    );
+                }
+
+                // Support common response shapes from the existing API.
+                let result = data.answer
+                    ?? data.natural_language_answer
+                    ?? data.response
+                    ?? data.results
+                    ?? data;
+
+                // Cache only successful responses.
+                cache[cacheKey] = result;
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+
+                showAnswer(result);
+                message.style.color = "#187344";
+                message.textContent = "Answer received successfully.";
+            } catch (error) {
+                message.style.color = "#a23b36";
+                message.textContent =
+                    "Could not get an answer. " + error.message +
+                    "\nCheck that FastAPI and PostgreSQL are running.";
+            } finally {
+                askButton.disabled = false;
+                updateUsage();
+            }
+        });
+
+        updateUsage();
+    </script>
+</body>
+</html>
